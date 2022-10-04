@@ -1,5 +1,6 @@
-// g++ sequential.cpp -o secuential
+// g++ open_mp.cpp -o openMP -fopenmp
 #include <bits/stdc++.h>
+#include <omp.h>
 using namespace std;
 typedef unsigned __int128 i128;
 
@@ -40,12 +41,14 @@ i128 discreteLog( i128 a , i128 b , i128 m ){ // a^x = b mod m
     unordered_map<i128,i128> f1_results;
     cout << "n = " << print(n) << endl ;
     
+    #pragma omp parallel for
     for(i128 p = 1 ; p <= ceil_division(m,n) ; p ++) {
         i128 value = function_1(a, n, p, m);
         if(!f1_results.count(value)) f1_results[value] = p;
     }
     
-    for(i128 q = 0 ; q <= n and !finished ; q ++) {
+    #pragma omp parallel for
+    for(i128 q = 0 ; q <= n ; q ++) {
         i128 value = function_2(a, b, q, m);
         if( f1_results.count(value) ){
             i128 p = f1_results[value];

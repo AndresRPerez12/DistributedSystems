@@ -60,10 +60,13 @@ i128 discreteLog( i128 a , i128 b , i128 m ){ // a^x = b mod m
 }
 
 int main(){
-    i128 a = 2;
-    i128 b = 1;
-    i128 m = 7;
+    i128 a = 56439;
+    i128 gen_x = 15432465;
+    i128 m = 1000000009;
+    i128 b = fastExpo(a, gen_x, m);
 
+    cout << "Solve " << print(a) << "^x" << " = " << print(b) << " mod " << print(m) << endl ;
+ 
     i128 x = discreteLog(a, b, m);
     assert(fastExpo(a,x,m) == b);
     //cout << "AAA" << endl ;

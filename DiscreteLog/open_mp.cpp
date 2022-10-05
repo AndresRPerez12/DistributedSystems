@@ -1,6 +1,7 @@
-// g++ open_mp.cpp -o openMP -fopenmp
+// g++ open_mp.cpp -o open_mp -fopenmp -ltbb -std=c++11
 #include <bits/stdc++.h>
 #include <omp.h>
+#include <tbb/tbb.h>
 using namespace std;
 typedef unsigned __int128 i128;
 
@@ -42,15 +43,18 @@ i128 calculate_x(i128 n, i128 p, i128 q, i128 m){
 }
 
 i128 discreteLog( i128 a , i128 b , i128 m ){ // a^x = b mod m
-    i128 n = sqrt(m), x;
+    i128 n = sqrt((long double) m), x;
     bool finished = false;
-    unordered_map<i128,i128> f1_results;
+    tbb::concurrent_unordered_map<i128,i128> f1_results;
     cout << "n = " << print(n) << endl ;
     
     #pragma omp parallel for
     for(i128 p = 1 ; p <= ceil_division(m,n) ; p ++) {
         i128 value = function_1(a, n, p, m);
-        if(!f1_results.count(value)) f1_results[value] = p;
+        if(!f1_results.count(value)){
+            //#pragma omp critical
+            f1_results[value] = p;
+        }
     }
 
     cout << "END PRECALC" << endl ;
@@ -62,7 +66,7 @@ i128 discreteLog( i128 a , i128 b , i128 m ){ // a^x = b mod m
             i128 p = f1_results[value];
             cout << "p = " << print(p) << " q = " << print(q) << endl ;
             finished = true;
-            #pragma omp critical
+            //#pragma omp critical
             x = calculate_x(n, p, q, m);
         }
     }
@@ -80,6 +84,5 @@ int main(){
     
     i128 x = discreteLog(a, b, m);
     assert(fastExpo(a,x,m) == b);
-    //cout << "AAA" << endl ;
     cout << print(a) << "^" << print(x) << " = " << print(b) << " mod " << print(m) << endl ;
 }

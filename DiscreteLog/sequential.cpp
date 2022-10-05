@@ -69,6 +69,5 @@ int main(){
  
     i128 x = discreteLog(a, b, m);
     assert(fastExpo(a,x,m) == b);
-    //cout << "AAA" << endl ;
     cout << print(a) << "^" << print(x) << " = " << print(b) << " mod " << print(m) << endl ;
 }

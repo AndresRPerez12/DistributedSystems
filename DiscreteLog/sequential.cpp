@@ -1,5 +1,7 @@
 // g++ sequential.cpp -o secuential
 #include <bits/stdc++.h>
+#include <sys/time.h>
+
 using namespace std;
 typedef unsigned __int128 i128;
 
@@ -35,7 +37,7 @@ i128 ceil_division(i128 num, i128 den){
 }
 
 i128 discreteLog( i128 a , i128 b , i128 m ){ // a^x = b mod m
-    i128 n = sqrt(m), x;
+    i128 n = sqrt((long double) m), x;
     bool finished = false;
     unordered_map<i128,i128> f1_results;
     cout << "n = " << print(n) << endl ;
@@ -67,7 +69,16 @@ int main(){
 
     cout << "Solve " << print(a) << "^x" << " = " << print(b) << " mod " << print(m) << endl ;
  
+    struct timeval tval_before, tval_after, tval_result;
+    gettimeofday(&tval_before, NULL);
+    
     i128 x = discreteLog(a, b, m);
+
+    gettimeofday(&tval_after, NULL);
+    timersub(&tval_after, &tval_before, &tval_result);
+
     assert(fastExpo(a,x,m) == b);
     cout << print(a) << "^" << print(x) << " = " << print(b) << " mod " << print(m) << endl ;
+
+    printf("%ld.%06ld seconds\n", (long int)tval_result.tv_sec, (long int)tval_result.tv_usec);
 }

@@ -2,6 +2,8 @@
 #include <bits/stdc++.h>
 #include <omp.h>
 #include <tbb/tbb.h>
+#include <sys/time.h>
+
 using namespace std;
 typedef unsigned __int128 i128;
 
@@ -82,7 +84,16 @@ int main(){
 
     cout << "Solve " << print(a) << "^x" << " = " << print(b) << " mod " << print(m) << endl ;
     
+    struct timeval tval_before, tval_after, tval_result;
+    gettimeofday(&tval_before, NULL);
+    
     i128 x = discreteLog(a, b, m);
+
+    gettimeofday(&tval_after, NULL);
+    timersub(&tval_after, &tval_before, &tval_result);
+
     assert(fastExpo(a,x,m) == b);
     cout << print(a) << "^" << print(x) << " = " << print(b) << " mod " << print(m) << endl ;
+
+    printf("%ld.%06ld seconds\n", (long int)tval_result.tv_sec, (long int)tval_result.tv_usec);
 }

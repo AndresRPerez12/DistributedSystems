@@ -1,4 +1,4 @@
-// g++ open_mp.cpp -o open_mp -fopenmp -ltbb -std=c++11
+// g++ open_mp.cpp -o open_mp -fopenmp -ltbb
 #include <bits/stdc++.h>
 #include <omp.h>
 #include <tbb/tbb.h>
@@ -58,13 +58,11 @@ i128 discreteLog( i128 a , i128 b , i128 m ){ // a^x = b mod m
             f1_results[value] = p;
         }
     }
-
-    cout << "END PRECALC" << endl ;
     
     #pragma omp parallel for
     for(i128 q = 0 ; q <= n ; q ++) {
         i128 value = function_2(a, b, q, m);
-        if( f1_results.count(value) ){
+        if( !finished and f1_results.count(value) ){
             i128 p = f1_results[value];
             cout << "p = " << print(p) << " q = " << print(q) << endl ;
             finished = true;
@@ -79,7 +77,7 @@ i128 discreteLog( i128 a , i128 b , i128 m ){ // a^x = b mod m
 int main(){
     i128 a = 56439;
     i128 gen_x = 15432465;
-    i128 m = 1000000009;
+    i128 m = 29996224275833;
     i128 b = fastExpo(a, gen_x, m);
 
     cout << "Solve " << print(a) << "^x" << " = " << print(b) << " mod " << print(m) << endl ;

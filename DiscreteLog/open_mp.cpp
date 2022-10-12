@@ -7,6 +7,8 @@
 using namespace std;
 typedef unsigned __int128 i128;
 
+int numThreads;
+
 string print(i128 x) {
     string ret = "";
     if( x >= (i128)10 ) ret += print(x / (i128)10);
@@ -50,31 +52,48 @@ i128 discreteLog( i128 a , i128 b , i128 m ){ // a^x = b mod m
     tbb::concurrent_unordered_map<i128,i128> f1_results;
     cout << "n = " << print(n) << endl ;
     
+    i128 limit = ceil_division(m,n);
+    i128 step = limit / (i128) numThreads;
     #pragma omp parallel for
-    for(i128 p = 1 ; p <= ceil_division(m,n) ; p ++) {
-        i128 value = function_1(a, n, p, m);
-        if(!f1_results.count(value)){
-            //#pragma omp critical
-            f1_results[value] = p;
+    for( int thread = 0 ; thread < numThreads ; thread ++ ){
+        i128 low = step * thread + (i128)1;
+        i128 high = low + step;
+        if( thread + 1 == numThreads ) high = limit;
+        for(i128 p = low ; p <= high ; p ++) {
+            i128 value = function_1(a, n, p, m);
+            if(!f1_results.count(value)){
+                f1_results[value] = p;
+            }
         }
     }
     
+    limit = n;
+    step = step = limit / (i128) numThreads;
     #pragma omp parallel for
-    for(i128 q = 0 ; q <= n ; q ++) {
-        i128 value = function_2(a, b, q, m);
-        if( !finished and f1_results.count(value) ){
-            i128 p = f1_results[value];
-            cout << "p = " << print(p) << " q = " << print(q) << endl ;
-            finished = true;
-            //#pragma omp critical
-            x = calculate_x(n, p, q, m);
+    for( int thread = 0 ; thread < numThreads ; thread ++ ){
+        i128 low = step * thread;
+        i128 high = low + step - (i128)1;
+        if( thread + 1 == numThreads ) high = limit;
+        for(i128 q = low ; q <= high ; q ++) {
+            i128 value = function_2(a, b, q, m);
+            if( !finished and f1_results.count(value) ){
+                i128 p = f1_results[value];
+                cout << "p = " << print(p) << " q = " << print(q) << endl ;
+                finished = true;
+                x = calculate_x(n, p, q, m);
+            }
         }
     }
 
     return x;
 }
 
-int main(){
+int main(int argc, char* argv[]){
+
+    stringstream threadsSs(argv[1]);
+    threadsSs >> numThreads;
+    cout << "Number of threads: " << numThreads << endl ;
+
     i128 a = 56439;
     i128 gen_x = 15432465;
     i128 m = 29996224275833;

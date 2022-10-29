@@ -14,22 +14,29 @@ typedef unsigned __int128 i128;
 int main(){
 
     // generate random numbers serially
-    thrust::host_vector<int> h_vec(50);
+    thrust::host_vector<int> h_vec( (int) sqrt(29996224275833) );
     std::generate(h_vec.begin(), h_vec.end(), rand);
+    std::cout << "generate " << time(NULL) << endl;
 
     // transfer data to the device
     thrust::device_vector<int> d_vec = h_vec;
-    // sort data on the device (846M keys per second on GeForce GTX 480)
+    cout << "copy to device " << time(NULL) << endl;
+
+    // sort data on the device
     thrust::sort(d_vec.begin(), d_vec.end());
+    std::cout << "sort in device " << time(NULL) << endl;
 
-    thrust::host_vector<int> h_vec_b(50,0);
     // transfer data back to host
-    thrust::copy(d_vec.begin(), d_vec.end(), h_vec_b.begin());
+    thrust::copy(d_vec.begin(), d_vec.end(), h_vec.begin());
+    std::cout << "copy to host " << time(NULL) << endl;
 
-    for(int i = 0 ; i < h_vec_b.size() ; i ++){
-        cout << h_vec_b[i] << " " ;
-        if(i) assert(h_vec_b[i] > h_vec_b[i-1]);
-    }
-    cout << endl ;
+    // gen local
+    vector<int> test( (int) sqrt(29996224275833) );
+    std::generate(test.begin(), test.end(), rand);
+    std::cout << "generate test " << time(NULL) << endl;
+
+    // sort local
+    sort(test.begin(),test.end());
+    std::cout << "sort test " << time(NULL) << endl;
     
 }

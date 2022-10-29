@@ -68,7 +68,7 @@ i128 discreteLog( i128 a , i128 b , i128 m ){ // a^x = b mod m
     }
     
     limit = n;
-    step = step = limit / (i128) numThreads;
+    step = limit / (i128) numThreads;
     #pragma omp parallel for
     for( int thread = 0 ; thread < numThreads ; thread ++ ){
         i128 low = step * thread;

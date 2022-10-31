@@ -9,34 +9,57 @@
 #include <thrust/copy.h>
 
 using namespace std;
-typedef unsigned __int128 i128;
+typedef __int128 i128;
+#define MAX_NODES 10000
+
+string print(i128 x) {
+    string ret = "";
+    if( x >= (i128)10 ) ret += print(x / (i128)10);
+    ret += char(x % (i128)10 + '0');
+    return ret;
+}
+
+i128 hostFastExpo( i128 &base, i128 &expo, i128 &m ){
+    if( expo == 0 ) return 1;
+    i128 prv_expo = expo/(i128)2;
+    i128 ret = hostFastExpo(base, prv_expo, m);
+    ret = (ret * ret)%m;
+    if( expo%(i128)2 ) ret = (ret * base)%m;
+    return ret;
+}
+
+__device__ i128 fastExpo( i128 base, i128 expo, i128 m ){
+    if( expo == 0 ) return 1;
+    i128 prv_expo = expo/(i128)2;
+    i128 ret = fastExpo(base, prv_expo, m);
+    ret = (ret * ret)%m;
+    if( expo%(i128)2 ) ret = (ret * base)%m;
+    return ret;
+}
+
+// __global__ void calculateFunction1(thrust::device_vector<long long> &results){
+__global__ void calculateFunction1(){
+    i128 var = fastExpo(5,3,37);
+    printf("%d\n", (int) var);
+}
+
+__global__ void calculateFunction2(){
+    long long var = fastExpo(5,3,37);
+}
 
 int main(){
 
-    // generate random numbers serially
-    thrust::host_vector<int> h_vec( (int) sqrt(29996224275833) );
-    std::generate(h_vec.begin(), h_vec.end(), rand);
-    std::cout << "generate " << time(NULL) << endl;
+    // i128 a = 56439;
+    // i128 gen_x = 15432465;
+    // i128 m = 29996224275833;
+    // i128 b = hostFastExpo(a, gen_x, m);
 
-    // transfer data to the device
-    thrust::device_vector<int> d_vec = h_vec;
-    cout << "copy to device " << time(NULL) << endl;
+    int var_a = 22;
+    printf("TEST %d\n",var_a);
 
-    // sort data on the device
-    thrust::sort(d_vec.begin(), d_vec.end());
-    std::cout << "sort in device " << time(NULL) << endl;
+    calculateFunction1<<<2,2>>>();
+    cudaDeviceSynchronize();
 
-    // transfer data back to host
-    thrust::copy(d_vec.begin(), d_vec.end(), h_vec.begin());
-    std::cout << "copy to host " << time(NULL) << endl;
-
-    // gen local
-    vector<int> test( (int) sqrt(29996224275833) );
-    std::generate(test.begin(), test.end(), rand);
-    std::cout << "generate test " << time(NULL) << endl;
-
-    // sort local
-    sort(test.begin(),test.end());
-    std::cout << "sort test " << time(NULL) << endl;
+    printf("POST TEST\n");
     
 }

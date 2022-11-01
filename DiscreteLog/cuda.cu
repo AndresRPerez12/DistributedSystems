@@ -74,8 +74,22 @@ __global__ void calculateFunction1(long long *a, long long *m, long long *n, lon
     printf("OUT THREAD %d\n", threadId);
 }
 
-__global__ void calculateFunction2(long long *a, long long *b, long long *m, long long *limit, long long *step, 
-                                    long long *results, long long *keys){
+__device__ long long getEqualResult(long long limit, long long *results, long long *keys, long long target){
+    int low = 0;
+    int high = limit-1;
+    int middle;
+    while( low < high ){
+        middle = (low+high+1)/2;
+        if( keys[middle] <= target ) low = middle;
+        else high = middle-1;
+    }
+    if(keys[low] == target) return results[target];
+    return -1;
+}
+
+__global__ void calculateFunction2(long long *a, long long *b, long long *m, long long *n,
+                                    long long *limit, long long *array_limit, long long *step, 
+                                    long long *results, long long *keys, long long* x){
     int threadId = blockIdx.x * blockDim.x + threadIdx.x;
     int numThreads = gridDim.x * blockDim.x;
     printf("IN F2 THREAD %d\n", threadId);
@@ -85,6 +99,11 @@ __global__ void calculateFunction2(long long *a, long long *b, long long *m, lon
     if( threadId + 1 == numThreads ) high = (*limit);
     for(i128 q = low ; q <= high ; q ++) {
         long long value = (long long)function_2((*a), (*b), q, (*m));
+        long long findP = getEqualResult((*array_limit), results, keys, value);
+        if( findP == -1 ) continue;
+        i128 currentX = ((i128)(*n) * (i128)findP)%( (i128)(*m) );
+        currentX = (currentX - q + (i128)(*m))%( (i128)(*m) );
+        *x = (long long) currentX;
     }
     printf("OUT F2 THREAD %d\n", threadId);
 }
@@ -120,6 +139,8 @@ int main(){
     long long host_n = sqrt((long double) m);
     long long host_limit = ceil_division(host_m,host_n);
     long long host_step = host_limit / (long long) numThreads;
+    long long host_x = -1;
+
     int var_size = sizeof( long long );
     int array_value_size = host_n + 5;
     int array_size = array_value_size * sizeof( long long );
@@ -133,6 +154,8 @@ int main(){
     long long *device_step;
     long long *device_results;
     long long *device_keys;
+    long long *device_x;
+    long long *device_array_limit;
 
     cudaMalloc( (void**)&device_a , var_size );
     cudaMalloc( (void**)&device_b , var_size );
@@ -142,6 +165,8 @@ int main(){
     cudaMalloc( (void**)&device_step , var_size );
     cudaMalloc( (void**)&device_results , array_size );
     cudaMalloc( (void**)&device_keys , array_size );
+    cudaMalloc( (void**)&device_x , var_size );
+    cudaMalloc( (void**)&device_array_limit , var_size );
 
     cudaMemcpy( device_a , &host_a , var_size , cudaMemcpyHostToDevice );
     cudaMemcpy( device_b , &host_b , var_size , cudaMemcpyHostToDevice );
@@ -149,6 +174,7 @@ int main(){
     cudaMemcpy( device_n , &host_n , var_size , cudaMemcpyHostToDevice );
     cudaMemcpy( device_limit , &host_limit , var_size , cudaMemcpyHostToDevice );
     cudaMemcpy( device_step , &host_step , var_size , cudaMemcpyHostToDevice );
+    cudaMemcpy( device_x , &host_x , var_size , cudaMemcpyHostToDevice );
 
     // Call the Function 1 kernel
     calculateFunction1<<<blocks,threadsPerBlock>>>(
@@ -167,14 +193,15 @@ int main(){
     cudaDeviceSynchronize();
 
     // Call the Function 2 kernel
+    cudaMemcpy( device_array_limit , &host_limit , var_size , cudaMemcpyHostToDevice );
     host_limit = host_n;
     host_step = host_limit / (long long) numThreads;
     cudaMemcpy( device_limit , &host_limit , var_size , cudaMemcpyHostToDevice );
     cudaMemcpy( device_step , &host_step , var_size , cudaMemcpyHostToDevice );
 
     calculateFunction2<<<blocks,threadsPerBlock>>>(
-        device_a, device_b, device_m, device_limit, device_step,
-        device_results, device_keys);
+        device_a, device_b, device_m, device_n, device_limit, device_array_limit, device_step,
+        device_results, device_keys, device_x);
     cudaDeviceSynchronize();
 
     // Free device memory

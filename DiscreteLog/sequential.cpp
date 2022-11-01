@@ -51,10 +51,10 @@ i128 discreteLog( i128 a , i128 b , i128 m ){ // a^x = b mod m
         i128 value = function_2(a, b, q, m);
         if( f1_results.count(value) ){
             i128 p = f1_results[value];
-            cout << "p = " << print(p) << " q = " << print(q) << endl ;
-            finished = true;
+            //finished = true;
             x = (n * p)%m;
             x = (x - q + m)%m;
+            cout << "p = " << print(p) << " q = " << print(q) << " x = " << (long long)x << endl ;
         }
     }
 
@@ -62,9 +62,14 @@ i128 discreteLog( i128 a , i128 b , i128 m ){ // a^x = b mod m
 }
 
 int main(){
-    i128 a = 56439;
-    i128 gen_x = 15432465;
-    i128 m = 29996224275833;
+    // i128 a = 56439;
+    // i128 gen_x = 15432465;
+    // i128 m = 29996224275833;
+    // i128 b = fastExpo(a, gen_x, m);
+
+    i128 a = 5;
+    i128 gen_x = 14;
+    i128 m = 37;
     i128 b = fastExpo(a, gen_x, m);
 
     cout << "Solve " << print(a) << "^x" << " = " << print(b) << " mod " << print(m) << endl ;

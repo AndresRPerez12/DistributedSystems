@@ -23,7 +23,7 @@ i128 ceil_division(i128 num, i128 den){
     return (num + den - (i128)1) / den;
 }
 
-i128 hostFastExpo( i128 &base, i128 &expo, i128 &m ){
+i128 hostFastExpo( i128 base, i128 expo, i128 m ){
     if( expo == 0 ) return 1;
     i128 prv_expo = expo/(i128)2;
     i128 ret = hostFastExpo(base, prv_expo, m);
@@ -56,22 +56,22 @@ __global__ void calculateFunction1(long long *a, long long *m, long long *n, lon
                                     long long *results, long long *keys){
     int threadId = blockIdx.x * blockDim.x + threadIdx.x;
     int numThreads = gridDim.x * blockDim.x;
-    printf("IN THREAD %d\n", threadId);
+    // printf("IN THREAD %d\n", threadId);
 
     i128 low = (*step) * threadId + (i128)1;
     i128 high = low + (*step) - (i128)1;
     if( threadId + 1 == numThreads ) high = (*limit);
     long long results_index = threadId * (*step);
-    printf("MIDDLE THREAD %d\n", threadId);
+    // printf("MIDDLE THREAD %d\n", threadId);
     for(i128 p = low ; p <= high ; p ++) {
         i128 value = function_1((*a), (*n), p, (*m));
         // INSERT TO RESULTS
-        printf("\tPut %d -> %d in %d\n", (int) p, (int) value, (int) results_index);
+        //printf("\tPut %d -> %d in %d\n", (int) p, (int) value, (int) results_index);
         results[results_index] = (long long) p;
         keys[results_index] = (long long) value;
         results_index ++;
     }
-    printf("OUT THREAD %d\n", threadId);
+    // printf("OUT THREAD %d\n", threadId);
 }
 
 __device__ long long getEqualResult(long long limit, long long *results, long long *keys, long long target){
@@ -83,7 +83,7 @@ __device__ long long getEqualResult(long long limit, long long *results, long lo
         if( keys[middle] <= target ) low = middle;
         else high = middle-1;
     }
-    if(keys[low] == target) return results[target];
+    if(keys[low] == target) return results[low];
     return -1;
 }
 
@@ -92,7 +92,7 @@ __global__ void calculateFunction2(long long *a, long long *b, long long *m, lon
                                     long long *results, long long *keys, long long* x){
     int threadId = blockIdx.x * blockDim.x + threadIdx.x;
     int numThreads = gridDim.x * blockDim.x;
-    printf("IN F2 THREAD %d\n", threadId);
+    // printf("IN F2 THREAD %d\n", threadId);
 
     i128 low = (*step) * threadId;
     i128 high = low + (*step) - (i128)1;
@@ -100,12 +100,14 @@ __global__ void calculateFunction2(long long *a, long long *b, long long *m, lon
     for(i128 q = low ; q <= high ; q ++) {
         long long value = (long long)function_2((*a), (*b), q, (*m));
         long long findP = getEqualResult((*array_limit), results, keys, value);
+        // printf("\tTry %d -> %d :: %d\n", (int) q, (int) value, (int) findP);
         if( findP == -1 ) continue;
         i128 currentX = ((i128)(*n) * (i128)findP)%( (i128)(*m) );
         currentX = (currentX - q + (i128)(*m))%( (i128)(*m) );
         *x = (long long) currentX;
+        // printf("\t FOUND X :: p=%d q=%d x=%d\n",(int)findP, (int)q, (int)currentX);
     }
-    printf("OUT F2 THREAD %d\n", threadId);
+    // printf("OUT F2 THREAD %d\n", threadId);
 }
 
 __global__ void print_arrays(long long *limit, long long *results, long long *keys){
@@ -125,8 +127,7 @@ int main(){
     i128 m = 37;
     i128 b = hostFastExpo(a, gen_x, m);
 
-    int var_a = 22;
-    printf("TEST %d\n",var_a);
+    printf("TEST\n");
 
     int blocks = 2;
     int threadsPerBlock = 2;
@@ -189,8 +190,8 @@ int main(){
     cudaDeviceSynchronize();
 
     // Check sort process
-    print_arrays<<<1,1>>>(device_limit, device_results, device_keys);
-    cudaDeviceSynchronize();
+    // print_arrays<<<1,1>>>(device_limit, device_results, device_keys);
+    // cudaDeviceSynchronize();
 
     // Call the Function 2 kernel
     cudaMemcpy( device_array_limit , &host_limit , var_size , cudaMemcpyHostToDevice );
@@ -204,6 +205,10 @@ int main(){
         device_results, device_keys, device_x);
     cudaDeviceSynchronize();
 
+    cudaMemcpy( &host_x , device_x , var_size , cudaMemcpyDeviceToHost );
+    cout << "FOUND X " << host_x << " :: " << host_a  << " ^ " << host_x << " =? " << host_b << " mod " << host_m << "\n" ;
+    cout << host_a  << " ^ " << host_x << " = " << (long long)hostFastExpo(a,host_x,m) << "\n" ;
+
     // Free device memory
     cudaFree( device_a );
     cudaFree( device_b );
@@ -213,6 +218,8 @@ int main(){
     cudaFree( device_step );
     cudaFree( device_results );
     cudaFree( device_keys );
+    cudaFree( device_x );
+    cudaFree( device_array_limit );
 
     printf("POST TEST\n");
     

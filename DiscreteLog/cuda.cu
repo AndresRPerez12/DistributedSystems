@@ -33,11 +33,13 @@ i128 hostFastExpo( i128 base, i128 expo, i128 m ){
 }
 
 __device__ i128 fastExpo( i128 base, i128 expo, i128 m ){
-    if( expo == 0 ) return 1;
-    i128 prv_expo = expo/(i128)2;
-    i128 ret = fastExpo(base, prv_expo, m);
-    ret = (ret * ret)%m;
-    if( expo%(i128)2 ) ret = (ret * base)%m;
+    i128 ret = 1, current = base;
+    while(expo > 0){
+        int r = expo%((i128) 2);
+        if( r == 1 ) ret = (ret*current)%m;
+        expo /= (i128) 2;
+        current = (current * current)%m;
+    }
     return ret;
 }
 
@@ -62,11 +64,12 @@ __global__ void calculateFunction1(long long *a, long long *m, long long *n, lon
     i128 high = low + (*step) - (i128)1;
     if( threadId + 1 == numThreads ) high = (*limit);
     long long results_index = threadId * (*step);
-    // printf("MIDDLE THREAD %d\n", threadId);
+    // printf("MIDDLE THREAD %d :: lo=%d hi=%d\n", threadId, (int)low, (int)high);
     for(i128 p = low ; p <= high ; p ++) {
+        // printf("\t --> TRY p = %d\n",(int)p);
         i128 value = function_1((*a), (*n), p, (*m));
         // INSERT TO RESULTS
-        //printf("\tPut %d -> %d in %d\n", (int) p, (int) value, (int) results_index);
+        // printf("\tPut %d -> %d in %d\n", (int) p, (int) value, (int) results_index);
         results[results_index] = (long long) p;
         keys[results_index] = (long long) value;
         results_index ++;
@@ -123,14 +126,14 @@ __global__ void print_arrays(long long *limit, long long *results, long long *ke
 int main(){
 
     i128 a = 5;
-    i128 gen_x = 14;
-    i128 m = 37;
+    i128 gen_x = 543215;
+    i128 m = 1000000007;
     i128 b = hostFastExpo(a, gen_x, m);
 
     printf("TEST\n");
 
-    int blocks = 2;
-    int threadsPerBlock = 2;
+    int blocks = 1;
+    int threadsPerBlock = 1;
     int numThreads = blocks * threadsPerBlock;
 
     // Host variables
@@ -142,9 +145,12 @@ int main(){
     long long host_step = host_limit / (long long) numThreads;
     long long host_x = -1;
 
+    cout << "host_n = " << host_n << endl ;
+
     int var_size = sizeof( long long );
     int array_value_size = host_n + 5;
     int array_size = array_value_size * sizeof( long long );
+    cout << "array_size = " << array_size << endl ;
 
     // Device variables
     long long *device_a;
@@ -164,8 +170,8 @@ int main(){
     cudaMalloc( (void**)&device_n , var_size );
     cudaMalloc( (void**)&device_limit , var_size );
     cudaMalloc( (void**)&device_step , var_size );
-    cudaMalloc( (void**)&device_results , array_size );
-    cudaMalloc( (void**)&device_keys , array_size );
+    cudaMalloc( (void**)&device_results , array_size*2 );
+    cudaMalloc( (void**)&device_keys , array_size*2 );
     cudaMalloc( (void**)&device_x , var_size );
     cudaMalloc( (void**)&device_array_limit , var_size );
 
@@ -177,11 +183,21 @@ int main(){
     cudaMemcpy( device_step , &host_step , var_size , cudaMemcpyHostToDevice );
     cudaMemcpy( device_x , &host_x , var_size , cudaMemcpyHostToDevice );
 
+    cudaDeviceSynchronize();
+
     // Call the Function 1 kernel
     calculateFunction1<<<blocks,threadsPerBlock>>>(
         device_a, device_m, device_n, device_limit, device_step,
         device_results, device_keys);
     cudaDeviceSynchronize();
+
+    cout << "AFTER F1" << endl ;
+
+    // Check arrays after process
+    // print_arrays<<<1,1>>>(device_limit, device_results, device_keys);
+    // cudaDeviceSynchronize();
+
+    cout << "AFTER C1" << endl ;
 
     // Sort results and keys
     thrust::device_ptr<long long> thrust_keys(device_keys);
@@ -190,8 +206,8 @@ int main(){
     cudaDeviceSynchronize();
 
     // Check sort process
-    // print_arrays<<<1,1>>>(device_limit, device_results, device_keys);
-    // cudaDeviceSynchronize();
+    print_arrays<<<1,1>>>(device_limit, device_results, device_keys);
+    cudaDeviceSynchronize();
 
     // Call the Function 2 kernel
     cudaMemcpy( device_array_limit , &host_limit , var_size , cudaMemcpyHostToDevice );

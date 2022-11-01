@@ -46,6 +46,12 @@ __device__ i128 function_1( i128 a, i128 n, i128 p, i128 m ){
     return fastExpo(a, expo, m);
 }
 
+__device__ i128 function_2( i128 a, i128 b, i128 q, i128 m ){
+    i128 ret = fastExpo(a, q, m);
+    ret = (ret * b)%m;
+    return ret;
+}
+
 __global__ void calculateFunction1(long long *a, long long *m, long long *n, long long *limit, long long *step, 
                                     long long *results, long long *keys){
     int threadId = blockIdx.x * blockDim.x + threadIdx.x;
@@ -68,8 +74,19 @@ __global__ void calculateFunction1(long long *a, long long *m, long long *n, lon
     printf("OUT THREAD %d\n", threadId);
 }
 
-__global__ void calculateFunction2(){
-    long long var = fastExpo(5,3,37);
+__global__ void calculateFunction2(long long *a, long long *b, long long *m, long long *limit, long long *step, 
+                                    long long *results, long long *keys){
+    int threadId = blockIdx.x * blockDim.x + threadIdx.x;
+    int numThreads = gridDim.x * blockDim.x;
+    printf("IN F2 THREAD %d\n", threadId);
+
+    i128 low = (*step) * threadId;
+    i128 high = low + (*step) - (i128)1;
+    if( threadId + 1 == numThreads ) high = (*limit);
+    for(i128 q = low ; q <= high ; q ++) {
+        long long value = (long long)function_2((*a), (*b), q, (*m));
+    }
+    printf("OUT F2 THREAD %d\n", threadId);
 }
 
 __global__ void print_arrays(long long *limit, long long *results, long long *keys){
@@ -134,7 +151,6 @@ int main(){
     cudaMemcpy( device_step , &host_step , var_size , cudaMemcpyHostToDevice );
 
     // Call the Function 1 kernel
-
     calculateFunction1<<<blocks,threadsPerBlock>>>(
         device_a, device_m, device_n, device_limit, device_step,
         device_results, device_keys);
@@ -146,7 +162,19 @@ int main(){
     thrust::sort_by_key(thrust::device, thrust_keys, thrust_keys + host_limit, thrust_results);
     cudaDeviceSynchronize();
 
+    // Check sort process
     print_arrays<<<1,1>>>(device_limit, device_results, device_keys);
+    cudaDeviceSynchronize();
+
+    // Call the Function 2 kernel
+    host_limit = host_n;
+    host_step = host_limit / (long long) numThreads;
+    cudaMemcpy( device_limit , &host_limit , var_size , cudaMemcpyHostToDevice );
+    cudaMemcpy( device_step , &host_step , var_size , cudaMemcpyHostToDevice );
+
+    calculateFunction2<<<blocks,threadsPerBlock>>>(
+        device_a, device_b, device_m, device_limit, device_step,
+        device_results, device_keys);
     cudaDeviceSynchronize();
 
     // Free device memory

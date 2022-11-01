@@ -132,8 +132,8 @@ int main(){
 
     printf("TEST\n");
 
-    int blocks = 1;
-    int threadsPerBlock = 1;
+    int blocks = 2;
+    int threadsPerBlock = 2;
     int numThreads = blocks * threadsPerBlock;
 
     // Host variables
@@ -206,8 +206,8 @@ int main(){
     cudaDeviceSynchronize();
 
     // Check sort process
-    print_arrays<<<1,1>>>(device_limit, device_results, device_keys);
-    cudaDeviceSynchronize();
+    // print_arrays<<<1,1>>>(device_limit, device_results, device_keys);
+    // cudaDeviceSynchronize();
 
     // Call the Function 2 kernel
     cudaMemcpy( device_array_limit , &host_limit , var_size , cudaMemcpyHostToDevice );

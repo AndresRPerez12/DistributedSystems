@@ -58,23 +58,23 @@ __global__ void calculateFunction1(long long *a, long long *m, long long *n, lon
                                     long long *results, long long *keys){
     int threadId = blockIdx.x * blockDim.x + threadIdx.x;
     int numThreads = gridDim.x * blockDim.x;
-    // printf("IN THREAD %d\n", threadId);
+    //printf("IN THREAD %d\n", threadId);
 
     i128 low = (*step) * threadId + (i128)1;
     i128 high = low + (*step) - (i128)1;
     if( threadId + 1 == numThreads ) high = (*limit);
     long long results_index = threadId * (*step);
-    // printf("MIDDLE THREAD %d :: lo=%d hi=%d\n", threadId, (int)low, (int)high);
+    //printf("MIDDLE THREAD %d :: lo=%lld hi=%lld\n", threadId, (long long)low, (long long)high);
     for(i128 p = low ; p <= high ; p ++) {
-        // printf("\t --> TRY p = %d\n",(int)p);
         i128 value = function_1((*a), (*n), p, (*m));
+        if((p%(i128)10000) == 0) //printf("\t --> %d TRY p = %lld\n",threadId, (long long)p);
         // INSERT TO RESULTS
-        // printf("\tPut %d -> %d in %d\n", (int) p, (int) value, (int) results_index);
+        // //printf("\tPut %d -> %d in %d\n", (int) p, (int) value, (int) results_index);
         results[results_index] = (long long) p;
         keys[results_index] = (long long) value;
         results_index ++;
     }
-    // printf("OUT THREAD %d\n", threadId);
+    //printf("OUT THREAD %d\n", threadId);
 }
 
 __device__ long long getEqualResult(long long limit, long long *results, long long *keys, long long target){
@@ -95,7 +95,7 @@ __global__ void calculateFunction2(long long *a, long long *b, long long *m, lon
                                     long long *results, long long *keys, long long* x){
     int threadId = blockIdx.x * blockDim.x + threadIdx.x;
     int numThreads = gridDim.x * blockDim.x;
-    // printf("IN F2 THREAD %d\n", threadId);
+    // //printf("IN F2 THREAD %d\n", threadId);
 
     i128 low = (*step) * threadId;
     i128 high = low + (*step) - (i128)1;
@@ -103,37 +103,42 @@ __global__ void calculateFunction2(long long *a, long long *b, long long *m, lon
     for(i128 q = low ; q <= high ; q ++) {
         long long value = (long long)function_2((*a), (*b), q, (*m));
         long long findP = getEqualResult((*array_limit), results, keys, value);
-        // printf("\tTry %d -> %d :: %d\n", (int) q, (int) value, (int) findP);
+        // //printf("\tTry %d -> %d :: %d\n", (int) q, (int) value, (int) findP);
         if( findP == -1 ) continue;
         i128 currentX = ((i128)(*n) * (i128)findP)%( (i128)(*m) );
         currentX = (currentX - q + (i128)(*m))%( (i128)(*m) );
         *x = (long long) currentX;
-        // printf("\t FOUND X :: p=%d q=%d x=%d\n",(int)findP, (int)q, (int)currentX);
+        // //printf("\t FOUND X :: p=%d q=%d x=%d\n",(int)findP, (int)q, (int)currentX);
     }
-    // printf("OUT F2 THREAD %d\n", threadId);
+    // //printf("OUT F2 THREAD %d\n", threadId);
 }
 
 __global__ void print_arrays(long long *limit, long long *results, long long *keys){
     int threadId = blockIdx.x * blockDim.x + threadIdx.x;
     // int numThreads = gridDim.x * blockDim.x;
-    printf("IN PRINT THREAD %d\n", threadId);
+    //printf("IN PRINT THREAD %d\n", threadId);
     for(int i = 0 ; i < (*limit) ; i ++){
-        printf("\tpos %d -> %d :: %d\n",i, (int)keys[i], (int)results[i]);
+        //printf("\tpos %d -> %d :: %d\n",i, (int)keys[i], (int)results[i]);
     }
-    printf("OUT PRINT THREAD %d\n", threadId);
+    //printf("OUT PRINT THREAD %d\n", threadId);
 }
 
 int main(){
 
-    i128 a = 5;
-    i128 gen_x = 543215;
-    i128 m = 1000000007;
+    i128 a = 56439;
+    i128 gen_x = 15432465;
+    i128 m = 29996224275833;
     i128 b = hostFastExpo(a, gen_x, m);
 
-    printf("TEST\n");
+    int blocks = 5;
+    int threadsPerBlock = 256;
 
-    int blocks = 2;
-    int threadsPerBlock = 2;
+    stringstream blocksSs(argv[1]);
+    blocksSs >> blocks;
+
+    stringstream threadsSs(argv[2]);
+    threadsSs >> threadsPerBlock;
+
     int numThreads = blocks * threadsPerBlock;
 
     // Host variables
@@ -237,6 +242,6 @@ int main(){
     cudaFree( device_x );
     cudaFree( device_array_limit );
 
-    printf("POST TEST\n");
+    //printf("POST TEST\n");
     
 }

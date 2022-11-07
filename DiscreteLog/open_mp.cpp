@@ -7,14 +7,7 @@
 using namespace std;
 typedef unsigned __int128 i128;
 
-int numThreads;
-
-string print(i128 x) {
-    string ret = "";
-    if( x >= (i128)10 ) ret += print(x / (i128)10);
-    ret += char(x % (i128)10 + '0');
-    return ret;
-}
+int numberOfThreads = 1;
 
 i128 fastExpo( i128 &base, i128 &expo, i128 &m ){
     if( expo == 0 ) return 1;
@@ -50,15 +43,14 @@ i128 discreteLog( i128 a , i128 b , i128 m ){ // a^x = b mod m
     i128 n = sqrt((long double) m), x;
     bool finished = false;
     tbb::concurrent_unordered_map<i128,i128> f1_results;
-    cout << "n = " << print(n) << endl ;
     
     i128 limit = ceil_division(m,n);
-    i128 step = limit / (i128) numThreads;
+    i128 step = max( limit / (i128) numberOfThreads , (i128) 1 );
     #pragma omp parallel for
-    for( int thread = 0 ; thread < numThreads ; thread ++ ){
+    for( int thread = 0 ; thread < numberOfThreads ; thread ++ ){
         i128 low = step * thread + (i128)1;
         i128 high = low + step;
-        if( thread + 1 == numThreads ) high = limit;
+        if( thread + 1 == numberOfThreads ) high = limit;
         for(i128 p = low ; p <= high ; p ++) {
             i128 value = function_1(a, n, p, m);
             if(!f1_results.count(value)){
@@ -68,17 +60,16 @@ i128 discreteLog( i128 a , i128 b , i128 m ){ // a^x = b mod m
     }
     
     limit = n;
-    step = limit / (i128) numThreads;
+    step = max( limit / (i128) numberOfThreads , (i128) 1 );
     #pragma omp parallel for
-    for( int thread = 0 ; thread < numThreads ; thread ++ ){
+    for( int thread = 0 ; thread < numberOfThreads ; thread ++ ){
         i128 low = step * thread;
         i128 high = low + step - (i128)1;
-        if( thread + 1 == numThreads ) high = limit;
+        if( thread + 1 == numberOfThreads ) high = limit;
         for(i128 q = low ; q <= high ; q ++) {
             i128 value = function_2(a, b, q, m);
             if( !finished and f1_results.count(value) ){
                 i128 p = f1_results[value];
-                cout << "p = " << print(p) << " q = " << print(q) << endl ;
                 finished = true;
                 x = calculate_x(n, p, q, m);
             }
@@ -90,16 +81,34 @@ i128 discreteLog( i128 a , i128 b , i128 m ){ // a^x = b mod m
 
 int main(int argc, char* argv[]){
 
-    stringstream threadsSs(argv[1]);
-    threadsSs >> numThreads;
-    cout << "Number of threads: " << numThreads << endl ;
+    i128 a, b, m;
+    long long read_a, read_b, read_m;
+    bool verbose_flag = 0;
 
-    i128 a = 56439;
-    i128 gen_x = 15432465;
-    i128 m = 29996224275833;
-    i128 b = fastExpo(a, gen_x, m);
+    stringstream read_a_SS(argv[1]);
+    read_a_SS >> read_a;
 
-    cout << "Solve " << print(a) << "^x" << " = " << print(b) << " mod " << print(m) << endl ;
+    stringstream read_b_SS(argv[2]);
+    read_b_SS >> read_b;
+
+    stringstream read_m_SS(argv[3]);
+    read_m_SS >> read_m;
+
+    stringstream read_flag_SS(argv[4]);
+    read_flag_SS >> verbose_flag;
+    
+    stringstream threads_SS(argv[5]);
+    threads_SS >> numberOfThreads;
+
+    a = read_a;
+    b = read_b;
+    m = read_m;
+
+    if(verbose_flag){
+        cout << "Solve " << (long long)a << "^x" << " = " << (long long)b
+            << " mod " << (long long)m << endl ;
+        cout << "Number of threads: " << numberOfThreads << endl ;
+    }
     
     struct timeval tval_before, tval_after, tval_result;
     gettimeofday(&tval_before, NULL);
@@ -109,8 +118,10 @@ int main(int argc, char* argv[]){
     gettimeofday(&tval_after, NULL);
     timersub(&tval_after, &tval_before, &tval_result);
 
-    assert(fastExpo(a,x,m) == b);
-    cout << print(a) << "^" << print(x) << " = " << print(b) << " mod " << print(m) << endl ;
+    if(verbose_flag)
+        cout << (long long)a << "^" << (long long)x << " = " << (long long)b
+            << " mod " << (long long)m << endl ;
 
-    printf("%ld.%06ld seconds\n", (long int)tval_result.tv_sec, (long int)tval_result.tv_usec);
+    assert(fastExpo(a,x,m) == b);
+    printf("%ld.%06ld\n", (long int)tval_result.tv_sec, (long int)tval_result.tv_usec);
 }

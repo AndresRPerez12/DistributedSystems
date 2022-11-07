@@ -12,13 +12,6 @@ using namespace std;
 typedef __int128 i128;
 #define MAX_NODES 10000
 
-string print(i128 x) {
-    string ret = "";
-    if( x >= (i128)10 ) ret += print(x / (i128)10);
-    ret += char(x % (i128)10 + '0');
-    return ret;
-}
-
 i128 ceil_division(i128 num, i128 den){
     return (num + den - (i128)1) / den;
 }
@@ -67,9 +60,9 @@ __global__ void calculateFunction1(long long *a, long long *m, long long *n, lon
     //printf("MIDDLE THREAD %d :: lo=%lld hi=%lld\n", threadId, (long long)low, (long long)high);
     for(i128 p = low ; p <= high ; p ++) {
         i128 value = function_1((*a), (*n), p, (*m));
-        if((p%(i128)10000) == 0) //printf("\t --> %d TRY p = %lld\n",threadId, (long long)p);
+        // if((p%(i128)10000) == 0) printf("\t --> %d TRY p = %lld\n",threadId, (long long)p);
         // INSERT TO RESULTS
-        // //printf("\tPut %d -> %d in %d\n", (int) p, (int) value, (int) results_index);
+        //printf("\tPut %d -> %d in %d\n", (int) p, (int) value, (int) results_index);
         results[results_index] = (long long) p;
         keys[results_index] = (long long) value;
         results_index ++;
@@ -108,54 +101,76 @@ __global__ void calculateFunction2(long long *a, long long *b, long long *m, lon
         i128 currentX = ((i128)(*n) * (i128)findP)%( (i128)(*m) );
         currentX = (currentX - q + (i128)(*m))%( (i128)(*m) );
         *x = (long long) currentX;
-        // //printf("\t FOUND X :: p=%d q=%d x=%d\n",(int)findP, (int)q, (int)currentX);
+        // printf("\t FOUND X :: p=%d q=%d x=%d :: value=%d\n",(int)findP, (int)q, (int)currentX, (int) value);
     }
     // //printf("OUT F2 THREAD %d\n", threadId);
 }
 
 __global__ void print_arrays(long long *limit, long long *results, long long *keys){
     int threadId = blockIdx.x * blockDim.x + threadIdx.x;
-    // int numThreads = gridDim.x * blockDim.x;
-    //printf("IN PRINT THREAD %d\n", threadId);
+    printf("IN PRINT THREAD %d\n", threadId);
     for(int i = 0 ; i < (*limit) ; i ++){
-        //printf("\tpos %d -> %d :: %d\n",i, (int)keys[i], (int)results[i]);
+        printf("\tpos %d -> %d :: %d\n",i, (int)keys[i], (int)results[i]);
     }
-    //printf("OUT PRINT THREAD %d\n", threadId);
+    printf("OUT PRINT THREAD %d\n", threadId);
 }
 
-int main(){
+int main(int argc, char* argv[]){
 
-    i128 a = 56439;
-    i128 gen_x = 15432465;
-    i128 m = 29996224275833;
-    i128 b = hostFastExpo(a, gen_x, m);
+    i128 a, b, m;
+    long long read_a, read_b, read_m;
+    bool verbose_flag = 0;
+    int blocks = 1, threadsPerBlock = 1;
 
-    int blocks = 5;
-    int threadsPerBlock = 256;
+    stringstream read_a_SS(argv[1]);
+    read_a_SS >> read_a;
 
-    stringstream blocksSs(argv[1]);
-    blocksSs >> blocks;
+    stringstream read_b_SS(argv[2]);
+    read_b_SS >> read_b;
 
-    stringstream threadsSs(argv[2]);
-    threadsSs >> threadsPerBlock;
+    stringstream read_m_SS(argv[3]);
+    read_m_SS >> read_m;
+
+    stringstream read_flag_SS(argv[4]);
+    read_flag_SS >> verbose_flag;
+    
+    stringstream blocks_SS(argv[5]);
+    blocks_SS >> blocks;
+
+    stringstream threads_SS(argv[6]);
+    threads_SS >> threadsPerBlock;
+
+    a = read_a;
+    b = read_b;
+    m = read_m;
 
     int numThreads = blocks * threadsPerBlock;
+
+    if(verbose_flag){
+        cout << "Solve " << (long long)a << "^x" << " = " << (long long)b
+            << " mod " << (long long)m << endl ;
+        cout << "Number of blocks: " << blocks << endl ;
+        cout << "Threads per block: " << threadsPerBlock << endl ;
+        cout << "Total threads: " << numThreads << endl ;
+    }
 
     // Host variables
     long long host_a = a;
     long long host_b = b;
     long long host_m = m;
     long long host_n = sqrt((long double) m);
+    threadsPerBlock = min( threadsPerBlock , (int) (host_n/(long long)blocks) );
+    numThreads = blocks * threadsPerBlock;
     long long host_limit = ceil_division(host_m,host_n);
     long long host_step = host_limit / (long long) numThreads;
     long long host_x = -1;
 
-    cout << "host_n = " << host_n << endl ;
+    // cout << "host_n = " << host_n << endl ;
 
     int var_size = sizeof( long long );
     int array_value_size = host_n + 5;
     int array_size = array_value_size * sizeof( long long );
-    cout << "array_size = " << array_size << endl ;
+    // cout << "array_size = " << array_size << endl ;
 
     // Device variables
     long long *device_a;
@@ -190,19 +205,22 @@ int main(){
 
     cudaDeviceSynchronize();
 
+    struct timeval tval_before, tval_after, tval_result;
+    gettimeofday(&tval_before, NULL);
+
     // Call the Function 1 kernel
     calculateFunction1<<<blocks,threadsPerBlock>>>(
         device_a, device_m, device_n, device_limit, device_step,
         device_results, device_keys);
     cudaDeviceSynchronize();
 
-    cout << "AFTER F1" << endl ;
+    // cout << "AFTER F1" << endl ;
 
     // Check arrays after process
     // print_arrays<<<1,1>>>(device_limit, device_results, device_keys);
     // cudaDeviceSynchronize();
 
-    cout << "AFTER C1" << endl ;
+    // cout << "AFTER C1" << endl ;
 
     // Sort results and keys
     thrust::device_ptr<long long> thrust_keys(device_keys);
@@ -226,9 +244,12 @@ int main(){
         device_results, device_keys, device_x);
     cudaDeviceSynchronize();
 
+    gettimeofday(&tval_after, NULL);
+    timersub(&tval_after, &tval_before, &tval_result);
+
     cudaMemcpy( &host_x , device_x , var_size , cudaMemcpyDeviceToHost );
-    cout << "FOUND X " << host_x << " :: " << host_a  << " ^ " << host_x << " =? " << host_b << " mod " << host_m << "\n" ;
-    cout << host_a  << " ^ " << host_x << " = " << (long long)hostFastExpo(a,host_x,m) << "\n" ;
+    // cout << "FOUND X " << host_x << " :: " << host_a  << " ^ " << host_x << " =? " << host_b << " mod " << host_m << "\n" ;
+    // cout << host_a  << " ^ " << host_x << " = " << (long long)hostFastExpo(a,host_x,m) << "\n" ;
 
     // Free device memory
     cudaFree( device_a );
@@ -241,6 +262,13 @@ int main(){
     cudaFree( device_keys );
     cudaFree( device_x );
     cudaFree( device_array_limit );
+
+    if(verbose_flag)
+        cout << (long long)a << "^" << (long long)host_x << " = " << (long long)b
+            << " mod " << (long long)m << endl ;
+
+    assert(hostFastExpo(a,host_x,m) == b);
+    printf("%ld.%06ld\n", (long int)tval_result.tv_sec, (long int)tval_result.tv_usec);
 
     //printf("POST TEST\n");
     

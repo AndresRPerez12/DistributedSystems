@@ -1,4 +1,4 @@
-// g++ sequential.cpp -o secuential
+// g++ sequential.cpp -o sequential
 #include <bits/stdc++.h>
 #include <sys/time.h>
 

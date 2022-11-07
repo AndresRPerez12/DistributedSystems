@@ -11,29 +11,49 @@ b=$2
 m=$3
 
 # Secuential
-g++ sequential.cpp -o secuential
 echo "Start sequential"
-for ((j=1; j<=10; j++))
+g++ sequential.cpp -o sequential
+total=0
+for ((j=1; j<=5; j++))
 do
-    result=$(./secuencial $a $b $m)
-    total=$(python -c "print ($total + $result)")
+    result=$(./sequential $a $b $m 0)
+    total=`echo $total+$result | bc -l`
 done
 echo "Total" $total
-average=$(python -c "print ($total / 10)")
-echo "Average" $average
+avg=`echo $total/5.0 | bc -l`
+echo "Average" $avg
 
 # OpenMP
-g++ open_mp.cpp -o open_mp -fopenmp -ltbb
 echo "Start OpenMP"
+g++ open_mp.cpp -o open_mp -fopenmp -ltbb
 for ((threads=1; threads<=16; threads*=2))
 do
-    echo "Threads:" $threads 
-    for ((j=1; j<=10; j++))
+    echo "Threads:" $threads
+    total=0
+    for ((j=1; j<=5; j++))
     do
-        result=$(./open_mp $threads $a $b $m)
-        total=$(python -c "print ($total + $result)")
+        result=$(./open_mp $a $b $m 0 $threads)
+        total=`echo $total+$result | bc -l`
     done
     echo "Total" $total
-    average=$(python -c "print ($total / 10)")
-    echo "Average" $average
+    avg=`echo $total/5.0 | bc -l`
+    echo "Average" $avg
+done
+
+#CUDA
+echo "Start CUDA"
+nvcc cuda.cu -o cuda
+blocks=5
+for ((threads=32; threads<=256; threads*=2))
+do
+    echo "Threads:" $threads
+    total=0
+    for ((j=1; j<=5; j++))
+    do
+        result=$(./cuda $a $b $m 0 $blocks $threads)
+        total=`echo $total+$result | bc -l`
+    done
+    echo "Total" $total
+    avg=`echo $total/5.0 | bc -l`
+    echo "Average" $avg
 done

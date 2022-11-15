@@ -1,7 +1,9 @@
-// mpicxx -o log-mpi log-mpi.cpp `pkg-config --cflags --libs opencv`
+// mpicxx -o log-mpi log-mpi.cpp
 // mpirun -np 4 log-mpi
 #include <bits/stdc++.h>
 #include <sys/time.h>
+
+#include "mpi.h"
 
 using namespace std;
 typedef unsigned __int128 i128;

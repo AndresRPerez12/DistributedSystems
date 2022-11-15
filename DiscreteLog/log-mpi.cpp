@@ -42,6 +42,7 @@ i128 a, b, m, n;
 long long x, proc_x;
 
 void calculateFunction1(long long low, long long high){
+    printf("Process %d enters calculateFunction1 with %lld %lld\n",pRank, low, high);
     int position = 0;
     for(i128 p = low ; p <= high ; p ++) {
         long long value = function_1(a, b, p, m);
@@ -119,8 +120,9 @@ int main(int argc, char* argv[]){
 
         if( pRank == root ){
             gettimeofday(&tval_before, NULL);
-            printf("Process %d n = %lld\n",(long long)n);
+            printf("Process %d n = %lld\n",pRank,(long long)n);
         }
+        MPI_Barrier( MPI_COMM_WORLD );
 
         long long limit = ceil_division(m,n);
         long long step = limit/(long long)size;

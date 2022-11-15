@@ -144,6 +144,7 @@ int main(int argc, char* argv[]){
         }
 
         printf("Process %d after sort\n",pRank);
+        MPI_Barrier( MPI_COMM_WORLD );
 
         MPI_Bcast( f1_values, array_size, MPI_LONG_LONG_INT, root, MPI_COMM_WORLD);
         MPI_Bcast( f1_keys, array_size, MPI_LONG_LONG_INT, root, MPI_COMM_WORLD);

@@ -32,7 +32,7 @@ i128 ceil_division(i128 num, i128 den){
     return (num + den - (i128)1) / den;
 }
 
-int rank, size;
+int pRank, size;
 const int array_size = 5476880 + 100;
 long long f1_values[array_size];
 long long f1_keys[array_size];
@@ -100,7 +100,7 @@ int main(int argc, char* argv[]){
 
     MPI_Init( &argc, &argv );
         int root = 0;
-        MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+        MPI_Comm_rank( MPI_COMM_WORLD, &pRank );
         MPI_Comm_size( MPI_COMM_WORLD, &size );
 
         a = 56439;
@@ -110,15 +110,15 @@ int main(int argc, char* argv[]){
     
         struct timeval tval_before, tval_after, tval_result;
 
-        if( rank == root ){
+        if( pRank == root ){
             gettimeofday(&tval_before, NULL);
         }
 
         long long limit = ceil_division(m,n);
         long long step = limit/(long long)size;
-        long long low = (long long)1 + ((long long) rank * step);
+        long long low = (long long)1 + ((long long) pRank * step);
         long long high = low + step - (long long)1;
-        if( rank + 1 == size ) high = limit;
+        if( pRank + 1 == size ) high = limit;
 
         for(int i = 0 ; i < step+2 ; i ++){
             local_f1_values[i] = LLONG_MAX;
@@ -131,7 +131,7 @@ int main(int argc, char* argv[]){
         MPI_Gather ( local_f1_keys, (int) step+2, MPI_LONG_LONG_INT, f1_keys, (int)(step+2)*size,
                     MPI_LONG_LONG_INT, root, MPI_COMM_WORLD );
 
-        if( rank == root ){
+        if( pRank == root ){
             sort_arrays();
         }
 
@@ -140,14 +140,14 @@ int main(int argc, char* argv[]){
 
         limit = n;
         step = limit/(long long)size;
-        low = (long long) rank * step;
+        low = (long long) pRank * step;
         high = low + step - (long long)1;
-        if( rank + 1 == size ) high = limit;
+        if( pRank + 1 == size ) high = limit;
         calculateFunction2();
 
         MPI_Reduce(&proc_x, &x, 1, MPI_LONG_LONG_INT, MPI_MAX, root, MPI COMM WORLD);
 
-        if( rank == root ){
+        if( pRank == root ){
             printf("FOUND X=%lld\n", x);
             gettimeofday(&tval_after, NULL);
             timersub(&tval_after, &tval_before, &tval_result);

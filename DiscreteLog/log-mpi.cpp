@@ -81,16 +81,19 @@ bool sort_by_value( int a , int b ){
 }
 
 void sort_arrays(){
-    int indexes[array_size];
-    long long f1_values_copy[array_size];
-    long long f1_keys_copy[array_size];
-    for( int i = 0 ; i < array_size ; i ++ ){
+    long long limit = ceil_division(m,n);
+    int indexes[limit];
+    long long f1_values_copy[limit];
+    long long f1_keys_copy[limit];
+    for( int i = 0 ; i < limit ; i ++ ){
         indexes[i] = i;
         f1_values_copy[i] = f1_values[i];
         f1_keys_copy[i] = f1_keys[i];
     }
-    sort(indexes, indexes+array_size, sort_by_value);
-    for( int i = 0 ; i < array_size ; i ++ ){
+    printf("Process %d after copy and indexes\n",pRank);
+    sort(indexes, indexes+limit, sort_by_value);
+    printf("Process %d after sort call\n",pRank);
+    for( int i = 0 ; i < limit ; i ++ ){
         f1_values[i] = f1_values_copy[indexes[i]];
         f1_values[i] = f1_keys_copy[indexes[i]];
     }

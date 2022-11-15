@@ -99,7 +99,7 @@ void sort_arrays(int limit){
     printf("Process %d after sort call\n",pRank);
     for( int i = 0 ; i < limit ; i ++ ){
         f1_values[i] = f1_values_copy[indexes[i]];
-        f1_values[i] = f1_keys_copy[indexes[i]];
+        f1_keys[i] = f1_keys_copy[indexes[i]];
         printf("\t %d -> %lld with p=%lld\n", i, f1_values[i], f1_keys[i]);
     }
 }

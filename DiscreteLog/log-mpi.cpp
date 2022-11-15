@@ -141,9 +141,10 @@ int main(int argc, char* argv[]){
         printf("Process %d after f1\n",pRank);
         MPI_Barrier( MPI_COMM_WORLD );
 
-        MPI_Gather ( local_f1_values, (int) step+2, MPI_LONG_LONG_INT, f1_values, (int)(step+2)*size,
+        int send_size = step + 2;
+        MPI_Gather ( local_f1_values, send_size, MPI_LONG_LONG_INT, f1_values, send_size,
                     MPI_LONG_LONG_INT, root, MPI_COMM_WORLD );
-        MPI_Gather ( local_f1_keys, (int) step+2, MPI_LONG_LONG_INT, f1_keys, (int)(step+2)*size,
+        MPI_Gather ( local_f1_keys, send_size, MPI_LONG_LONG_INT, f1_keys, send_size,
                     MPI_LONG_LONG_INT, root, MPI_COMM_WORLD );
         MPI_Barrier( MPI_COMM_WORLD );
 

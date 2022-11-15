@@ -45,7 +45,7 @@ void calculateFunction1(long long low, long long high){
     printf("Process %d enters calculateFunction1 with %lld %lld\n",pRank, low, high);
     int position = 0;
     for(i128 p = low ; p <= high ; p ++) {
-        long long value = function_1(a, b, p, m);
+        long long value = function_1(a, n, p, m);
         local_f1_values[position] = value;
         local_f1_keys[position] = (long long) p;
         position ++;
@@ -184,12 +184,9 @@ int main(int argc, char* argv[]){
             gettimeofday(&tval_after, NULL);
             timersub(&tval_after, &tval_before, &tval_result);
             printf("%ld.%06ld\n", (long int)tval_result.tv_sec, (long int)tval_result.tv_usec);
+
+            i128 testX = x;
+            assert(fastExpo(a,testX,m) == b);
         }
     MPI_Finalize( );
-    
-    gettimeofday(&tval_after, NULL);
-    timersub(&tval_after, &tval_before, &tval_result);
-
-    i128 testX = x;
-    assert(fastExpo(a,testX,m) == b);
 }

@@ -81,10 +81,12 @@ bool sort_by_value( int a , int b ){
 }
 
 void sort_arrays(){
+    printf("Process %d enters sort_arrays\n",pRank);
     long long limit = ceil_division(m,n);
     int indexes[limit];
     long long f1_values_copy[limit];
     long long f1_keys_copy[limit];
+    printf("Process %d before copy and indexes\n",pRank);
     for( int i = 0 ; i < limit ; i ++ ){
         indexes[i] = i;
         f1_values_copy[i] = f1_values[i];

@@ -143,9 +143,9 @@ int main(int argc, char* argv[]){
         low = (long long) pRank * step;
         high = low + step - (long long)1;
         if( pRank + 1 == size ) high = limit;
-        calculateFunction2();
+        calculateFunction2(low, high);
 
-        MPI_Reduce(&proc_x, &x, 1, MPI_LONG_LONG_INT, MPI_MAX, root, MPI COMM WORLD);
+        MPI_Reduce(&proc_x, &x, 1, MPI_LONG_LONG_INT, MPI_MAX, root, MPI_COMM_WORLD);
 
         if( pRank == root ){
             printf("FOUND X=%lld\n", x);
@@ -158,5 +158,6 @@ int main(int argc, char* argv[]){
     gettimeofday(&tval_after, NULL);
     timersub(&tval_after, &tval_before, &tval_result);
 
-    assert(fastExpo(a,x,m) == b);
+    i128 testX = x;
+    assert(fastExpo(a,testX,m) == b);
 }

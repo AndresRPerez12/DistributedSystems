@@ -51,9 +51,9 @@ void calculateFunction1(long long low, long long high){
     }
 }
 
-long long getEqualResult(long long limit, long long target){
+long long getEqualResult(long long target){
     int low = 0;
-    int high = limit-1;
+    int high = ceil_division(m,n)-1;
     int middle;
     while( low < high ){
         middle = (low+high+1)/2;
@@ -65,10 +65,10 @@ long long getEqualResult(long long limit, long long target){
 }
 
 void calculateFunction2(long long low, long long high){
-    x = -1;
-    for(i128 q = low ; q <= high ; q ++) {
+    proc_x = -1;
+    for(i128 q = low ; q <= high and proc_x == -1 ; q ++) {
         long long value = function_2(a, b, q, m);
-        long long findP = getEqualResult(array_size, value);
+        long long findP = getEqualResult(value);
         if( findP == -1 ) continue;
         i128 currentX = (n * (i128)findP)%( m );
         currentX = (currentX - q + m)%( m );
@@ -169,6 +169,7 @@ int main(int argc, char* argv[]){
 
         calculateFunction2(low, high);
         printf("Process %d after f2\n",pRank);
+        printf("Process %d FOUND X=%lld\n",pRank, proc_x);
         MPI_Barrier( MPI_COMM_WORLD );
 
         MPI_Reduce(&proc_x, &x, 1, MPI_LONG_LONG_INT, MPI_MAX, root, MPI_COMM_WORLD);

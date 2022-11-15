@@ -119,6 +119,7 @@ int main(int argc, char* argv[]){
 
         if( pRank == root ){
             gettimeofday(&tval_before, NULL);
+            printf("Process %d n = %lld\n",(long long)n);
         }
 
         long long limit = ceil_division(m,n);

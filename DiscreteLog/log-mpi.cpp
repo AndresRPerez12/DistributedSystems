@@ -85,8 +85,7 @@ int indexes[array_size];
 long long f1_values_copy[array_size];
 long long f1_keys_copy[array_size];
 
-void sort_arrays(){
-    const int limit = ceil_division(m,n);
+void sort_arrays(int limit){
     printf("Process %d enters sort_arrays with %d\n",pRank, limit);
     printf("Process %d before copy and indexes\n",pRank);
     for( int i = 0 ; i < limit ; i ++ ){
@@ -101,6 +100,7 @@ void sort_arrays(){
     for( int i = 0 ; i < limit ; i ++ ){
         f1_values[i] = f1_values_copy[indexes[i]];
         f1_values[i] = f1_keys_copy[indexes[i]];
+        printf("\t %d -> %lld with p=%lld\n", i, f1_values[i], f1_keys[i]);
     }
 }
 
@@ -151,7 +151,7 @@ int main(int argc, char* argv[]){
         printf("Process %d after gather\n",pRank);
 
         if( pRank == root ){
-            sort_arrays();
+            sort_arrays(send_size * size);
         }
 
         printf("Process %d after sort\n",pRank);

@@ -125,27 +125,46 @@ int main(int argc, char* argv[]){
             local_f1_keys[i] = LLONG_MAX;
         }
 
+        printf("Process %d before f1\n",pRank);
+
         calculateFunction1(low, high);
+        printf("Process %d after f1\n",pRank);
+        MPI_Barrier( MPI_COMM_WORLD );
+
         MPI_Gather ( local_f1_values, (int) step+2, MPI_LONG_LONG_INT, f1_values, (int)(step+2)*size,
                     MPI_LONG_LONG_INT, root, MPI_COMM_WORLD );
         MPI_Gather ( local_f1_keys, (int) step+2, MPI_LONG_LONG_INT, f1_keys, (int)(step+2)*size,
                     MPI_LONG_LONG_INT, root, MPI_COMM_WORLD );
+        MPI_Barrier( MPI_COMM_WORLD );
+
+        printf("Process %d after gather\n",pRank);
 
         if( pRank == root ){
             sort_arrays();
         }
 
+        printf("Process %d after sort\n",pRank);
+
         MPI_Bcast( f1_values, array_size, MPI_LONG_LONG_INT, root, MPI_COMM_WORLD);
         MPI_Bcast( f1_keys, array_size, MPI_LONG_LONG_INT, root, MPI_COMM_WORLD);
+        MPI_Barrier( MPI_COMM_WORLD );
+
+        printf("Process %d after bcast\n",pRank);
 
         limit = n;
         step = limit/(long long)size;
         low = (long long) pRank * step;
         high = low + step - (long long)1;
         if( pRank + 1 == size ) high = limit;
+
+        printf("Process %d before f2\n",pRank);
+
         calculateFunction2(low, high);
+        printf("Process %d after f2\n",pRank);
+        MPI_Barrier( MPI_COMM_WORLD );
 
         MPI_Reduce(&proc_x, &x, 1, MPI_LONG_LONG_INT, MPI_MAX, root, MPI_COMM_WORLD);
+        MPI_Barrier( MPI_COMM_WORLD );
 
         if( pRank == root ){
             printf("FOUND X=%lld\n", x);

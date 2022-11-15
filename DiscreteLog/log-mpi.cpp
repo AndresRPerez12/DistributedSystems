@@ -81,8 +81,8 @@ bool sort_by_value( int a , int b ){
 }
 
 void sort_arrays(){
-    printf("Process %d enters sort_arrays\n",pRank);
-    long long limit = ceil_division(m,n);
+    const int limit = ceil_division(m,n);
+    printf("Process %d enters sort_arrays with %d\n",pRank, limit);
     int indexes[limit];
     long long f1_values_copy[limit];
     long long f1_keys_copy[limit];

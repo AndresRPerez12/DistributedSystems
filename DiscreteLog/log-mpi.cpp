@@ -80,13 +80,14 @@ bool sort_by_value( int a , int b ){
     return f1_values[a] < f1_values[b];
 }
 
+int indexes[array_size];
+long long f1_values_copy[array_size];
+long long f1_keys_copy[array_size];
+
 void sort_arrays(){
     printf("ENTER SORT ARRAYS\n");
     const int limit = ceil_division(m,n);
     printf("Process %d enters sort_arrays with %d\n",pRank, limit);
-    int indexes[limit];
-    long long f1_values_copy[limit];
-    long long f1_keys_copy[limit];
     printf("Process %d before copy and indexes\n",pRank);
     for( int i = 0 ; i < limit ; i ++ ){
         indexes[i] = i;

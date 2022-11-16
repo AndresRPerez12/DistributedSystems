@@ -92,7 +92,7 @@ void sort_arrays(int limit){
         indexes[i] = i;
         f1_values_copy[i] = f1_values[i];
         f1_keys_copy[i] = f1_keys[i];
-        printf("\t %d -> %lld with p=%lld\n", i, f1_values[i], f1_keys[i]);
+        // printf("\t %d -> %lld with p=%lld\n", i, f1_values[i], f1_keys[i]);
     }
     printf("Process %d after copy and indexes\n",pRank);
     sort(indexes, indexes+limit, sort_by_value);
@@ -100,7 +100,7 @@ void sort_arrays(int limit){
     for( int i = 0 ; i < limit ; i ++ ){
         f1_values[i] = f1_values_copy[indexes[i]];
         f1_keys[i] = f1_keys_copy[indexes[i]];
-        printf("\t %d -> %lld with p=%lld\n", i, f1_values[i], f1_keys[i]);
+        // printf("\t %d -> %lld with p=%lld\n", i, f1_values[i], f1_keys[i]);
     }
 }
 
@@ -111,9 +111,9 @@ int main(int argc, char* argv[]){
         MPI_Comm_rank( MPI_COMM_WORLD, &pRank );
         MPI_Comm_size( MPI_COMM_WORLD, &size );
 
-        a = 5;
-        b = 14;
-        m = 37;
+        a = 56439;
+        b = 27341644544150;
+        m = 29996224275833;
         n = sqrt((long double) m);
     
         struct timeval tval_before, tval_after, tval_result;

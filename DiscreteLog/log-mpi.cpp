@@ -42,7 +42,6 @@ i128 a, b, m, n;
 long long x, proc_x;
 
 void calculateFunction1(long long low, long long high){
-    printf("Process %d enters calculateFunction1 with %lld %lld\n",pRank, low, high);
     int position = 0;
     for(i128 p = low ; p <= high ; p ++) {
         long long value = function_1(a, n, p, m);
@@ -86,21 +85,15 @@ long long f1_values_copy[array_size];
 long long f1_keys_copy[array_size];
 
 void sort_arrays(int limit){
-    printf("Process %d enters sort_arrays with %d\n",pRank, limit);
-    printf("Process %d before copy and indexes\n",pRank);
     for( int i = 0 ; i < limit ; i ++ ){
         indexes[i] = i;
         f1_values_copy[i] = f1_values[i];
         f1_keys_copy[i] = f1_keys[i];
-        // printf("\t %d -> %lld with p=%lld\n", i, f1_values[i], f1_keys[i]);
     }
-    printf("Process %d after copy and indexes\n",pRank);
     sort(indexes, indexes+limit, sort_by_value);
-    printf("Process %d after sort call\n",pRank);
     for( int i = 0 ; i < limit ; i ++ ){
         f1_values[i] = f1_values_copy[indexes[i]];
         f1_keys[i] = f1_keys_copy[indexes[i]];
-        // printf("\t %d -> %lld with p=%lld\n", i, f1_values[i], f1_keys[i]);
     }
 }
 
@@ -120,9 +113,7 @@ int main(int argc, char* argv[]){
 
         if( pRank == root ){
             gettimeofday(&tval_before, NULL);
-            printf("Process %d n = %lld\n",pRank,(long long)n);
         }
-        MPI_Barrier( MPI_COMM_WORLD );
 
         long long limit = ceil_division(m,n);
         long long step = limit/(long long)size;
@@ -135,10 +126,7 @@ int main(int argc, char* argv[]){
             local_f1_keys[i] = LLONG_MAX;
         }
 
-        printf("Process %d before f1\n",pRank);
-
         calculateFunction1(low, high);
-        printf("Process %d after f1\n",pRank);
         MPI_Barrier( MPI_COMM_WORLD );
 
         int send_size = step + 2;
@@ -148,20 +136,16 @@ int main(int argc, char* argv[]){
                     MPI_LONG_LONG_INT, root, MPI_COMM_WORLD );
         MPI_Barrier( MPI_COMM_WORLD );
 
-        printf("Process %d after gather\n",pRank);
 
         if( pRank == root ){
             sort_arrays(send_size * size);
         }
 
-        printf("Process %d after sort\n",pRank);
         MPI_Barrier( MPI_COMM_WORLD );
 
         MPI_Bcast( f1_values, array_size, MPI_LONG_LONG_INT, root, MPI_COMM_WORLD);
         MPI_Bcast( f1_keys, array_size, MPI_LONG_LONG_INT, root, MPI_COMM_WORLD);
         MPI_Barrier( MPI_COMM_WORLD );
-
-        printf("Process %d after bcast\n",pRank);
 
         limit = n;
         step = limit/(long long)size;
@@ -169,10 +153,8 @@ int main(int argc, char* argv[]){
         high = low + step - (long long)1;
         if( pRank + 1 == size ) high = limit;
 
-        printf("Process %d before f2\n",pRank);
 
         calculateFunction2(low, high);
-        printf("Process %d after f2\n",pRank);
         printf("Process %d FOUND X=%lld\n",pRank, proc_x);
         MPI_Barrier( MPI_COMM_WORLD );
 
